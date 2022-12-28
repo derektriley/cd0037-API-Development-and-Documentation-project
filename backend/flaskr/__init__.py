@@ -96,7 +96,7 @@ def create_app(test_config=None):
             'success': True})
 
     """
-    @TODO:
+    @DONE:
     Create an endpoint to POST a new question,
     which will require the question and answer text,
     category, and difficulty score.
@@ -105,9 +105,42 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     """
+    @app.route('/questions', methods=["POST"])
+    @cross_origin()
+    def post_question():
+        json = request.get_json()
+
+        searchTerm = json.get('searchTerm', None)
+        if searchTerm:
+            questions = (Question.query
+                                .filter(Question.question.ilike(f'%{searchTerm}%'))
+                                .all())
+            formattedQuestions = [question.format() for question in questions]
+
+            return jsonify({
+                'questions': formattedQuestions,
+                'totalQuestions': len(questions),
+                'currentCategory': 'Entertainment'
+            })
+        # We are inserting a new question
+        newQuestion = Question(json.get('question', None),
+                               json.get('answer', None),
+                               json.get('category', None),
+                               json.get('difficulty', None))
+
+        try:
+            newQuestion.insert()
+        except:
+            db.session.rollback()
+        finally:
+            db.session.close()
+
+        return jsonify({
+            'success': True
+        })
 
     """
-    @TODO:
+    @DONE Above:
     Create a POST endpoint to get questions based on a search term.
     It should return any questions for whom the search term
     is a substring of the question.
@@ -139,10 +172,25 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
+    @DONE:
     Create error handlers for all expected errors
     including 404 and 422.
     """
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 404,
+            "message": "Not found"
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable_entity(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": "Unprocessable Entity"
+        }), 422
 
     return app
 
