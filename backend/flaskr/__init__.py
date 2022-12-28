@@ -89,6 +89,8 @@ def create_app(test_config=None):
             question.delete()
         except:
             db.session.rollback()
+            return jsonify({
+                'success': False}), 404
         finally:
             db.session.close()
 
