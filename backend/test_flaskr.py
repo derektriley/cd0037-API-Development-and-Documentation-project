@@ -57,7 +57,10 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']) > 0)
 
     def test_delete_question_success(self):
-        endpoint = "/questions/1"
+        newQuestion = Question('Test', 'Test', 1, 1)
+        newQuestion.insert()
+
+        endpoint = f"/questions/{newQuestion.id}"
 
         response = self.client().delete(endpoint)
         data = json.loads(response.data)
@@ -87,6 +90,21 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertTrue(response.status_code == 200)
 
+    def test_question_post_fail(self):
+        endpoint = "/questions"
+
+        request = {
+            "question": "New Question",
+            "answer": "Answer",
+            "difficulty": 1,
+            "category": 0
+        }
+
+        response = self.client().post(endpoint, json=request)
+        data = json.loads(response.data)
+
+        self.assertTrue(response.status_code == 500)
+
     def test_question_post_search_success(self):
         endpoint = "/questions"
 
@@ -109,6 +127,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(response.status_code == 200)
         self.assertTrue(data['totalQuestions'] > 0)
 
+    def test_get_questions_category_fail(self):
+        endpoint = "/categories/99999999/questions"
+
+        response = self.client().get(endpoint)
+        data = json.loads(response.data)
+
+        self.assertTrue(data['totalQuestions'] == 0)
+
     def test_play_quiz_success(self):
         endpoint = "/quizzes"
 
@@ -122,6 +148,19 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertTrue(response.status_code == 200)
         self.assertTrue(data['question'])
+
+    def test_play_quiz_fail(self):
+        endpoint = "/quizzes"
+
+        request = {
+            'previous_questions': [],
+            'quiz_category': 'test'
+        }
+
+        response = self.client().post(endpoint, json=request)
+        data = json.loads(response.data)
+
+        self.assertTrue(response.status_code == 500)
   
 
 # Make the tests conveniently executable

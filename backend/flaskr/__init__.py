@@ -95,7 +95,8 @@ def create_app(test_config=None):
             db.session.close()
 
         return jsonify({
-            'success': True})
+            'success': True,
+            'question_id': question_id})
 
     """
     @DONE:
@@ -134,6 +135,9 @@ def create_app(test_config=None):
             newQuestion.insert()
         except:
             db.session.rollback()
+            return jsonify({
+                'success': True
+                }), 500
         finally:
             db.session.close()
 
@@ -191,9 +195,9 @@ def create_app(test_config=None):
         json = request.get_json()
         givenCategory = json.get("quiz_category", None)
         previousQuestions = json.get("previous_questions", [])
-        if givenCategory['id'] != 0:
+        if givenCategory != 0:
             questions = (Question.query
-                                .filter(Question.category == givenCategory['id'])
+                                .filter(Question.category == givenCategory)
                                 .filter(Question.id not in previousQuestions)
                                 .all())
         else:
@@ -226,6 +230,14 @@ def create_app(test_config=None):
             "error": 422,
             "message": "Unprocessable Entity"
         }), 422
+
+    @app.errorhandler(500)
+    def unprocessable_entity(error):
+        return jsonify({
+            "success": False,
+            "error": 500,
+            "message": "Server encountered an error"
+        }), 500
 
     return app
 
