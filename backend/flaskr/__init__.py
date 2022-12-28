@@ -151,16 +151,30 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
+    @DONE:
     Create a GET endpoint to get questions based on category.
 
     TEST: In the "List" tab / main screen, clicking on one of the
     categories in the left column will cause only questions of that
     category to be shown.
     """
+    @app.route('/categories/<int:category_id>/questions', methods=["GET"])
+    @cross_origin()
+    def get_questions_by_category(category_id):
+        questions = (Question.query
+                                .filter(Question.category == category_id)
+                                .all())
+        formattedQuestions = [question.format() for question in questions]
+
+        return jsonify({
+            'questions': formattedQuestions,
+            'totalQuestions': len(questions),
+            'currentCategory': 'History'
+        })
+
 
     """
-    @TODO:
+    @DONE:
     Create a POST endpoint to get questions to play the quiz.
     This endpoint should take category and previous question parameters
     and return a random questions within the given category,
@@ -170,6 +184,25 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+    @app.route('/quizzes', methods=["POST"])
+    def play_quiz():
+        json = request.get_json()
+        givenCategory = json.get("quiz_category", None)
+        previousQuestions = json.get("previous_questions", [])
+        if givenCategory['id'] != 0:
+            questions = (Question.query
+                                .filter(Question.category == givenCategory['id'])
+                                .filter(Question.id not in previousQuestions)
+                                .all())
+        else:
+            questions = (Question.query
+                                .filter(Question.id not in previousQuestions)
+                                .all())
+        randomQuestion = random.choice(questions)
+
+        return jsonify({
+            "question": randomQuestion.format()
+        })
 
     """
     @DONE:
